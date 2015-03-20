@@ -1,0 +1,60 @@
+
+R version 3.0.3 (2014-03-06) -- "Warm Puppy"
+Copyright (C) 2014 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> options(stringsAsFactors=F)
+> 
+> load("predictions.RData")
+> load("coefficients.RData")
+> load("rows_metadata.RData")
+> 
+> r2 = r.pVa ^ 2
+> pdf( "r2_histogram.pdf" )
+> par( lwd = 2 )
+> hist( r2 , breaks = 50 , col = "black" , cex.axis = 2 , xlab = "" , ylab = "" , main = "" , ylim = c(0,1200) )
+> dev.off()
+null device 
+          1 
+> 
+> goodPred = which( r2 > 0.5 )
+> 
+> trn = coefficients[ goodPred , ]
+> anno = anno[ goodPred , ]
+> 
+> kIn = summary ( rowSums( trn[,-1] != 0 ) ) # median = 416 )
+> names(kIn) = paste( "kIn" , names(kIn) , sep = "." )
+> kOut = summary ( colSums( trn[,-1] != 0 ) ) # median = 28 )
+> names(kOut) = paste( "kOut" , names(kOut) , sep = "." )
+> nEdges = length( which( trn[,-1] != 0 )) #393696
+> names(nEdges) = "nEdges"
+> nTargets = nrow(trn) 
+> names(nTargets) = "nTargets"
+> nRegulators = ncol(trn)-1
+> names(nRegulators) = "nRegulators"
+> stats = c( kIn , kOut , nEdges , nTargets , nRegulators )
+> stats = data.frame( names(stats) , stats )
+> 
+> write.table( stats , row.names=F , col.names=F , quote=F , sep = "\t" , file = "trn_stats.txt")
+> 
+> save( trn , anno , file = "trn_and_metadata.RData" )
+> 
+> proc.time()
+   user  system elapsed 
+  6.687   0.420   7.171 

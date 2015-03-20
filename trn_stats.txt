@@ -1,0 +1,15 @@
+kIn.Min.	0
+kIn.1st Qu.	15
+kIn.Median	22
+kIn.Mean	24.92
+kIn.3rd Qu.	33
+kIn.Max.	106
+kOut.Min.	0
+kOut.1st Qu.	110.5
+kOut.Median	339
+kOut.Mean	560.8
+kOut.3rd Qu.	785
+kOut.Max.	2797
+nEdges	306735
+nTargets	12310
+nRegulators	547
