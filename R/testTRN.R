@@ -1,4 +1,4 @@
-getTestSetPerformance <-
+testTRN <-
 function( trn , expr , physnet ) {
 
 require( glmnet )
