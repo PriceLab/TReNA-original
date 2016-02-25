@@ -1,8 +1,8 @@
-Package: trena
+Package: TReNA
 Type: Package
 Title: Fit transcriptional regulatory networks using transcription factor binding sites and lasso regression.
-Version: 1.0
-Date: 2015-05-18
+Version: 0.99.0
+Date: 2016-02-25
 Author: Seth Ament (Institute for Systems Biology)
 Maintainer: Seth Ament (Institute for Systems Biology) <seth.ament@systemsbiology.org>
 Requires: glmnet
