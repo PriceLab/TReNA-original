@@ -1,5 +1,5 @@
-fitTRN <-
-function( expr , physnet , offset = NULL , lambda = 0.1 , alpha = 1 , cores = NULL ) {
+fitTRN_old <-
+function( expr , physnet , lambda = 0.1 , cores = NULL , alpha = 1 ) {
 
 require(glmnet)
 require(foreach)
@@ -15,17 +15,11 @@ physnet = physnet[ , which( colnames(physnet) %in% rownames(expr) ) ]
 sd = apply( expr , 1 , sd )
 actual = ( expr - rowMeans(expr) ) / sd
 
-# "offsets" for each gene.
-if( is.null(offset) ) {
- offset = matrix( 0 , nrow = nrow(actual) , ncol = ncol(actual) )
-}
-
-
 # initialize some matrices and vectors to store information about the lasso 
 # regression model - most of this is now done after foreach loop.
 tf.symbols = intersect( rownames(expr) , colnames( physnet ) )
-coefficient_names = matrix( 0 , nrow = 1 , ncol = length(tf.symbols)+1 )
-colnames(coefficient_names) = c("Intercept",tf.symbols)
+coefficient_names = matrix( 0 , nrow = 1 , ncol = length(tf.symbols) + 1 )
+colnames(coefficient_names) = c("Intercept" , tf.symbols )
 
 if( lambda != "adaptive" && !is.numeric(lambda) ) {
   cat( "lambda is out of range. please specify a numeric value or 'adaptive'." )
@@ -48,9 +42,6 @@ return_list <- list();
 
 #y is the expression data for the target gene
 y = actual[ i , ]
-
-#offset.i is the offset from a previous model, if applicable
-offset.i = offset[i,]
 
 #sub defines the row for this target gene in the TFBS database
 sub = which( rownames(physnet) == symbol )
@@ -105,11 +96,11 @@ x = t( actual[ pr , ] )
 #in the latter case, we choose the maximum value of lambda for each target gene, such that the residual variance is <1 standard deviation above the minimum residual variance (which may be overfit)
 
 if( lambda == "adaptive" ) {
-  fit = cv.glmnet( y = y , x = x , offset = offset.i , alpha = alpha , family = "gaussian" )
+  fit = cv.glmnet( y = y , x = x , alpha = alpha , family = "gaussian" )
   s = fit$lambda.1se
 } else
 if( is.numeric(lambda) ) {
-  fit = glmnet( y = y , x = x , offset = offset.i , alpha = alpha , family = "gaussian" )
+  fit = glmnet( y = y , x = x , alpha = alpha , family = "gaussian" )
   s = lambda
 } else {
   cat( "Inconceivable!\n" )
@@ -124,7 +115,7 @@ return_list[[2]] = s
 #here we predict the values of y using the regression model produced by glmnet, using the lambda specified above.
 #we compare the predicted values to the actual expression levels of gene i.
 #and we save the predicted values to the pred matrix.
-pred.i = predict( fit , newx = x , s = s , offset = offset.i , type = "link" )
+pred.i = predict( fit , newx = x , s = s , type = "link" )
 #pred[i,] = pred.i
 return_list[["3"]] = pred.i
 
@@ -132,13 +123,12 @@ r.pVa.i = cor( pred.i[,1] , y )
 return_list[["4"]] = r.pVa.i ^ 2 
 
 #now we extract the coefficients of the TFs with non-zero estimates in our model and save these to the coefficients matrix
-nonzero = predict( fit , newx = x , s = s , offset = offset.i , type = "nonzero" )
+nonzero = predict( fit , newx = x , s = s , type = "nonzero" )
 #if(!is.null(nonzero[[1]]))cat( paste( length(nonzero[,1]) , "regulators, r =" , r.pVa[i] ) )
-coef.i = predict(  fit , newx = x , s = s , offset = offset.i ,  type = "coefficients" )[,1]
+coef.i = predict(  fit , newx = x , s = s , type = "coefficients" )[,1]
 names(coef.i)[1] = "Intercept"
 match.coef = match( names(coef.i) , colnames(coefficient_names) )
 #coefficients[ i , match.coef ] = coef.i
-
 return_list[[5]] = coef.i
 return_list[[6]] = match.coef
 #cat("\n")
@@ -155,7 +145,7 @@ pred = matrix( NA , nrow = nrow( actual ) , ncol = ncol( actual ) )
 fits = list()
 r.pVa= rep( NA , nrow(actual) )
 coefficients = matrix( 0 , nrow = nrow(actual) , ncol = length(tf.symbols) + 1 )
-colnames(coefficients) = c("Intercept",tf.symbols)
+colnames(coefficients) = c("Intercept" , tf.symbols )
 rownames(coefficients) = rownames(actual)
 lambda.i = rep( NA , nrow(actual) )
 

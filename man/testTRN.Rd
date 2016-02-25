@@ -1,8 +1,8 @@
-\name{getTestSetPerformance}
-\alias{getTestSetPerformance}
+\name{testTRN}
+\alias{testTRN}
 \title{Test accuracy of predictions from fitTRN in independent samples.}
 \description{Uses the lasso regression model from a TRN object (usually produced by fitTRN) to predict expression levels in an independent test set.}
-\usage{getTestSetPerformance(trn, expr, physnet)}
+\usage{testTRN(trn, expr, physnet)}
 \arguments{
   \item{trn}{A TRN object, usually produced by fitTRN.}
   \item{expr}{An expression matrix with genes in rows and samples in columns. Gene names should be in the same order as the training data used to generate 'trn'.}

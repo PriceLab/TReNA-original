@@ -1,5 +1,5 @@
 estLambda <-
-function( expr , physnet , n = 100 , lambda = "adaptive"  ) {
+function( expr , physnet , n = 100 , offset = NULL , lambda = "adaptive"  ) {
 
 require( glmnet )
 
@@ -9,6 +9,13 @@ physnet = physnet[ , which( colnames(physnet) %in% rownames(expr) ) ]
 #center and scale the expression data.
 sd = apply( expr , 1 , sd )
 actual = ( expr - rowMeans(expr) ) / sd
+
+
+# "offsets" for each gene.
+if( is.null(offset) ) {
+ offset = matrix( 0 , nrow = nrow(actual) , ncol = ncol(actual) )
+}
+
 
 sampled.genes = sample( 1:nrow(actual) , n )
 
@@ -32,7 +39,7 @@ symbol = rownames(actual)[i]
 
 #print the name of the target gene on the console
 status = paste( "Working on row" , i , "," , symbol , ": " )
-cat(status)
+# cat(status)
 
 #y is the expression data for the target gene
 y = actual[ i , ]
@@ -42,7 +49,7 @@ sub = which( rownames(physnet) == symbol )
 
 #if the target gene is not present in the TFBS database, we skip this gene.
 if( length(sub) == 0 ) {
-cat("\n")
+# cat("\n")
 next
 }
 
@@ -84,11 +91,11 @@ x = t( actual[ pr , ] )
 #in the latter case, we choose the maximum value of lambda for each target gene, such that the residual variance is <1 standard deviation above the minimum residual variance (which may be overfit)
 
 if( lambda == "adaptive" ) {
-fit = cv.glmnet( y = y , x = x , family = "gaussian" )
+fit = cv.glmnet( y = y , x = x , offset = offset[i,] ,  family = "gaussian" )
 s = fit$lambda.1se
 } else
 if( is.numeric(lambda) ) {
-fit = glmnet( y = y , x = x , family = "gaussian" )
+fit = glmnet( y = y , x = x , offset = offset[i,] , family = "gaussian" )
 s = lambda
 } else {
 cat( "\n" )
@@ -101,18 +108,18 @@ lambda.i[j] = s
 #here we predict the values of y using the regression model produced by glmnet, using the lambda specified above.
 #we compare the predicted values to the actual expression levels of gene i.
 #and we save the predicted values to the pred matrix.
-pred.i = predict( fit , newx = x , s = s , type = "link" )
+pred.i = predict( fit , newx = x , s = s , offset = offset[i,] , type = "link" )
 r.pVa[j] = cor( pred.i[,1] , y )
 pred[j,] = pred.i
 
 #now we extract the coefficients of the TFs with non-zero estimates in our model and save these to the coefficients matrix
-nonzero = predict( fit , newx = x , s = s , type = "nonzero" )
-if(!is.null(nonzero[[1]]))cat( paste( length(nonzero[,1]) , "regulators, r =" , r.pVa[j] ) )
-coef.i = predict(  fit , newx = x , s = s , type = "coefficients" )[,1]
+nonzero = predict( fit , newx = x , s = s , offset = offset[i,] , type = "nonzero" )
+# if(!is.null(nonzero[[1]]))cat( paste( length(nonzero[,1]) , "regulators, r =" , r.pVa[j] ) )
+coef.i = predict(  fit , newx = x , s = s , offset = offset[i,] , type = "coefficients" )[,1]
 names(coef.i)[1] = "Intercept"
 match.coef = match( names(coef.i) , colnames(coefficients) )
 coefficients[ j , match.coef ] = coef.i
-cat("\n")
+# cat("\n")
 }
 
 #print summary statistics
@@ -125,7 +132,9 @@ cat( "Summary of Prediction Accuracies (R^2)\n" )
 cat( paste( "   " , names(summ.r2) , "=" , summ.r2 , "\n" ) )
 
 #finally, output the TRN model and various perforamce metrics to a list object.
-list( fits = fits , predicted.expression = pred , actual.expression = actual , 
+outp = list( fits = fits , predicted.expression = pred , actual.expression = actual , 
 beta.coefficients = coefficients , lambda = lambda.i , r2.predVactual = r.pVa ^ 2 , lambda.median = median(lambda.i , na.rm = T ) , r2.median = median ( r.pVa ^ 2 , na.rm = T ) )
+
+return( outp )
 
 }

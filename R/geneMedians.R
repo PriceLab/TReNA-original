@@ -1,6 +1,6 @@
 geneMedians = 
 function( expr , anno ) {
-
+expr = as.matrix(expr)
 genes = unique( anno )
 genes = setdiff( genes , c("" , NA) )
 geneExpr = matrix( nrow = length(genes) , ncol = ncol(expr) )
@@ -17,6 +17,6 @@ for( i in 1:length(genes) ) {
 colnames(geneExpr) = colnames(expr)
 rownames(geneExpr) = genes
 
-geneExpr
+return(geneExpr)
 
 }
